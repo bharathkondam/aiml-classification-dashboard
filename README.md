@@ -37,6 +37,18 @@ If `origin` is already configured, update it with `git remote set-url origin htt
 
 Scores use the fixed held-out split for each dataset. Precision, recall, and F1 are weighted averages. Binary AUC uses malignant as the positive class. Multiclass AUC is macro one-vs-rest. Scores are rounded to four decimal places.
 
+### Model Training Configuration
+
+| Model | Training configuration |
+|---|---|
+| Logistic Regression | `StandardScaler` + `LogisticRegression(max_iter=3000, random_state=42)` in a scikit-learn `Pipeline` |
+| Decision Tree | `DecisionTreeClassifier(random_state=42)` |
+| K-Nearest Neighbors | `StandardScaler` + `KNeighborsClassifier(n_neighbors=5)` in a scikit-learn `Pipeline` |
+| Gaussian Naive Bayes | `GaussianNB()` with default parameters |
+| Support Vector Machine | `StandardScaler` + `SVC(probability=True, random_state=42)` in a scikit-learn `Pipeline` |
+
+For both datasets, the stratified 80/20 train/test split is created before any model is fitted. For Logistic Regression, K-Nearest Neighbors, and SVM, `StandardScaler` is part of the estimator `Pipeline`. Calling `fit` on the training split learns the scaler's means and standard deviations from training rows only; prediction then applies those learned values to the held-out test rows. This prevents test-set feature statistics from leaking into preprocessing. Decision Tree and Gaussian Naive Bayes are not wrapped in scaling pipelines.
+
 ### Binary: Breast Cancer Wisconsin Diagnostic
 
 | ML Model | Accuracy | AUC | Precision | Recall | F1 | MCC |
@@ -74,7 +86,7 @@ Scores use the fixed held-out split for each dataset. Precision, recall, and F1 
 | ML Model | Metric evidence | Performance interpretation |
 |---|---|---|
 | Logistic Regression | Accuracy 0.9214; macro OVR AUC 0.9948; MCC 0.9050 | Strong overall multi-class results. Its high macro OVR AUC indicates excellent average class ranking across the seven varieties, and its accuracy and MCC show that this also translates into strong hard-label predictions. |
-| Decision Tree | Accuracy 0.8917; macro OVR AUC 0.9448; MCC 0.8691 | Lowest accuracy and macro OVR AUC among the multiclass models. The weaker average one-vs-rest ranking suggests a greater challenge separating several varieties; its rule-based structure may still be useful when inspectability is important. |
+| Decision Tree | Accuracy 0.8917; macro OVR AUC 0.9448; MCC 0.8691 | Decision Tree achieves 0.8917 accuracy and 0.9448 macro OVR AUC. Although it has the lowest AUC among the five multiclass models, Gaussian Naive Bayes has the lowest accuracy. Decision Tree provides moderate predictive performance and offers interpretability through its rule-based structure. |
 | K-Nearest Neighbors | Accuracy 0.9166; macro OVR AUC 0.9833; MCC 0.8992 | Competitive accuracy and MCC after scaling the 16 features. The AUC trails the linear and SVM models, suggesting slightly weaker probability ranking across classes on this split. |
 | Gaussian Naive Bayes | Accuracy 0.7639; macro OVR AUC 0.9672; MCC 0.7154 | Lowest accuracy, weighted F1, and MCC, despite a substantially higher AUC. This indicates class-probability ranking is better than its final label decisions suggest, but its predictions are less reliable overall than the other models for this dataset. |
 | Support Vector Machine | Accuracy 0.9221; macro OVR AUC 0.9949; weighted F1 0.9222; MCC 0.9059 | Best multiclass accuracy, weighted F1, MCC, and macro OVR AUC on this split. It is the strongest aggregate performer among the five evaluated models, although its accuracy advantage over Logistic Regression is small. |
