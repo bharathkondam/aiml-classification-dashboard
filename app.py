@@ -30,6 +30,12 @@ MODEL_FILES = {
 
 @st.cache_resource
 def load_models(classification_type: str) -> dict[str, object]:
+    """Load the five persisted estimators for the selected task type.
+
+    Cache model objects as resources so Streamlit reruns do not deserialize
+    the same joblib files after every widget interaction. Binary and
+    multiclass models live in separate directories and are never mixed.
+    """
     model_dir = ROOT / "models" / classification_type
     return {
         name: joblib.load(model_dir / filename)
@@ -38,6 +44,12 @@ def load_models(classification_type: str) -> dict[str, object]:
 
 
 def evaluate_model(model: object, data: pd.DataFrame, feature_names: list[str]) -> tuple[dict[str, float], pd.DataFrame, pd.DataFrame]:
+    """Evaluate one already-trained estimator; this function never fits it.
+
+    Binary AUC uses malignant as the positive class when available. For
+    multiclass tasks, macro one-vs-rest AUC averages class-wise ranking
+    performance so each class contributes equally.
+    """
     x_test = data[feature_names]
     y_test = data["target"]
     predictions = model.predict(x_test)
@@ -45,6 +57,8 @@ def evaluate_model(model: object, data: pd.DataFrame, feature_names: list[str]) 
     probabilities = model.predict_proba(x_test)
     present_labels = set(y_test)
     if len(classes) == 2:
+        # Set a stable positive class for the medical dataset; retain a
+        # deterministic fallback for any other supported binary model.
         positive_label = "malignant" if "malignant" in classes else classes[-1]
         positive_index = classes.index(positive_label)
         auc = (
@@ -54,6 +68,9 @@ def evaluate_model(model: object, data: pd.DataFrame, feature_names: list[str]) 
         )
         auc_label = "AUC"
     else:
+        # sklearn's multiclass ROC AUC requires probability columns for the
+        # complete class set. A partial upload cannot produce a comparable
+        # macro score, so expose it as unavailable instead of mis-scoring it.
         auc = (
             roc_auc_score(
                 y_test,
@@ -66,6 +83,8 @@ def evaluate_model(model: object, data: pd.DataFrame, feature_names: list[str]) 
             else float("nan")
         )
         auc_label = "AUC (macro OVR)"
+    # Weighted averages account for class support; MCC provides a single
+    # balanced measure of agreement that remains useful with uneven classes.
     metrics = {
         "Accuracy": accuracy_score(y_test, predictions),
         auc_label: auc,
@@ -200,6 +219,8 @@ dataset_details = {
 st.caption(dataset_details[classification_type])
 models = load_models(classification_type)
 first_model = next(iter(models.values()))
+# Use the persisted model's fitted feature metadata as the schema contract;
+# this keeps the uploader aligned with the exact training columns and order.
 feature_names = list(first_model.feature_names_in_)
 class_names = list(first_model.classes_)
 
@@ -223,6 +244,7 @@ with st.sidebar:
 
 try:
     if test_data_source == "Bundled test split":
+        # Each model suite has a matching held-out CSV produced by train_models.py.
         sample_path = DATA_DIR / classification_type / "test_data.csv"
         test_data = pd.read_csv(sample_path)
         st.info(f"Showing the bundled {classification_label.lower()} test split.")
@@ -232,6 +254,8 @@ try:
     else:
         test_data = pd.read_csv(uploaded_file)
 
+    # Reject mismatched schemas before prediction rather than silently
+    # reordering, dropping, or inventing feature values.
     required_columns = feature_names + ["target"]
     missing_columns = [column for column in required_columns if column not in test_data.columns]
     if missing_columns:
@@ -249,6 +273,8 @@ try:
         st.error("Feature columns must contain numeric values only.")
         st.stop()
 
+    # Validate labels against the chosen suite, which also prevents binary
+    # test data from accidentally being scored by multiclass estimators.
     observed_labels = set(test_data["target"].astype(str))
     expected_labels = set(class_names)
     unexpected_labels = sorted(observed_labels - expected_labels)
@@ -270,6 +296,8 @@ try:
     if len(observed_labels) < len(expected_labels):
         st.warning("AUC is unavailable because this CSV does not contain every model class.")
 
+    # Reuse the saved models for evaluation only. Uploaded rows are never
+    # passed to fit(), so test data cannot alter the trained estimators.
     all_results: dict[str, dict[str, float]] = {}
     selected_details = None
     for model_name, model in models.items():
