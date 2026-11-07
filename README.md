@@ -20,15 +20,12 @@ The UCI sources are bundled with the project so training and deployment do not r
 
 **Repository:** [Open the project repository](https://github.com/bharathkondam/aiml-classification-dashboard).
 
-To create the repository, open [github.com/new](https://github.com/new), create a public repository named `aiml-classification-dashboard`, and leave the options to add a README, `.gitignore`, or license unchecked. From this project folder, run these commands after replacing `YOUR-USERNAME`:
+From this project folder, use these commands to publish future changes:
 
 ```powershell
-git init
-git add app.py train_models.py requirements.txt README.md SUBMISSION_CHECKLIST.md .gitignore .streamlit/config.toml evaluation_metrics.json data/ models/
-git commit -m "Add classification model lab"
-git branch -M main
-git remote add origin https://github.com/bharathkondam/aiml-classification-dashboard.git
-git push -u origin main
+git add app.py train_models.py requirements.txt README.md .gitignore .streamlit/config.toml evaluation_metrics.json data/ models/
+git commit -m "Update classification model lab"
+git push origin main
 ```
 
 If `origin` is already configured, update it with `git remote set-url origin https://github.com/bharathkondam/aiml-classification-dashboard.git` instead of adding it again. The repository should include the source files, `requirements.txt`, this README, both UCI source datasets, the generated test data and metrics, and both five-model suites.
@@ -125,7 +122,6 @@ app.py
 train_models.py
 requirements.txt
 README.md
-SUBMISSION_CHECKLIST.md
 .streamlit/config.toml
 data/
 	wdbc_source/
@@ -143,7 +139,5 @@ models/
 	multiclass/             Five saved multiclass model pipelines
 evaluation_metrics.json
 ```
-
-Before submitting, work through [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md). It distinguishes artifacts verified in this folder from the external links and screenshot that still need to be created.
 
 For the assignment submission PDF, include the final GitHub link, deployed app link, this README content, and the required screenshot of the assignment running in BITS Virtual Lab.
