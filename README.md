@@ -163,5 +163,3 @@ models/
 	multiclass/             Five saved multiclass model pipelines
 evaluation_metrics.json
 ```
-
-For the assignment submission PDF, include the final GitHub link, deployed app link, this README content, and the required screenshot of the assignment running in BITS Virtual Lab.
