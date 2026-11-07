@@ -16,9 +16,12 @@ This project supports both binary and multiclass classification. Choose the clas
 
 The UCI sources are bundled with the project so training and deployment do not require Kaggle credentials or a dataset download at runtime. No API token is needed.
 
-## GitHub Repository Link
+## Project Links
 
-**Repository:** [Open the project repository](https://github.com/bharathkondam/aiml-classification-dashboard).
+| Link type | Purpose | Link |
+|---|---|---|
+| **SOURCE REPOSITORY** | Source code, datasets, trained models, and documentation | [Open GitHub repository](https://github.com/bharathkondam/aiml-classification-dashboard) |
+| **LIVE STREAMLIT APP** | Interactive Binary/Multiclass classification dashboard | [Launch Classification Model Lab](https://aiml-classification-dashboard.streamlit.app/) |
 
 From this project folder, use these commands to publish future changes:
 
@@ -54,16 +57,39 @@ Scores use the fixed held-out split for each dataset. Precision, recall, and F1 
 | Gaussian Naive Bayes | 0.7639 | 0.9672 | 0.7654 | 0.7639 | 0.7615 | 0.7154 |
 | Support Vector Machine | 0.9221 | 0.9949 | 0.9224 | 0.9221 | 0.9222 | 0.9059 |
 
-### Performance Observations
+### Model Performance Details
 
-| ML Model | Observation |
-|---|---|
-| Logistic Regression | Performs strongly on both tasks; it is competitive on binary and multiclass test splits. |
-| Decision Tree | Lower AUC than other models on both tasks; remains the most interpretable tree-based baseline. |
-| K-Nearest Neighbors | Strong results after feature scaling, especially on the binary test split. |
-| Gaussian Naive Bayes | Performs better on the binary split than multiclass Dry Bean, reflecting dataset-dependent feature distributions. |
-| Support Vector Machine | Best binary accuracy (0.9737) and the top multiclass accuracy (0.9221) on the generated splits. |
-| **Overall winner** | **Support Vector Machine** leads by accuracy on both datasets. Results depend on the selected dataset and fixed split. |
+#### Binary Dataset Observations
+
+| ML Model | Metric evidence | Performance interpretation |
+|---|---|---|
+| Logistic Regression | Accuracy 0.9649; AUC 0.9960; MCC 0.9245 | Strong separation of benign and malignant cases. Its highest AUC suggests the probability scores rank the two classes especially well, while accuracy indicates reliable predictions at the model's decision threshold. It is a competitive, relatively simple linear baseline. |
+| Decision Tree | Accuracy 0.9298; AUC 0.9246; MCC 0.8492 | Lowest AUC and MCC among the binary models, so it is less consistent than the other approaches on this split. Its tree structure can be easier to inspect, but interpretability does not translate into the highest predictive performance here. |
+| K-Nearest Neighbors | Accuracy 0.9561; AUC 0.9823; MCC 0.9058 | Performs well after feature scaling, with high accuracy and strong class agreement. Its AUC is below Logistic Regression, Gaussian Naive Bayes, and SVM; results can depend on the choice of neighbor count and distance behavior. |
+| Gaussian Naive Bayes | Accuracy 0.9386; AUC 0.9934; MCC 0.8715 | The high AUC indicates strong ranking of cases, while the lower accuracy and MCC show that the final class assignments are less strong than its ranking suggests. The gap is a reason to consider calibration or decision-threshold analysis if the task requires a different error trade-off. |
+| Support Vector Machine | Accuracy 0.9737; AUC 0.9947; F1 0.9735; MCC 0.9442 | Best binary accuracy, weighted F1, and MCC. It combines very strong class discrimination with the strongest overall agreement on this test split. Logistic Regression has a slightly higher AUC (0.9960), so SVM does not lead every metric. |
+
+#### Multiclass Dataset Observations
+
+| ML Model | Metric evidence | Performance interpretation |
+|---|---|---|
+| Logistic Regression | Accuracy 0.9214; macro OVR AUC 0.9948; MCC 0.9050 | Strong overall multi-class results. Its high macro OVR AUC indicates excellent average class ranking across the seven varieties, and its accuracy and MCC show that this also translates into strong hard-label predictions. |
+| Decision Tree | Accuracy 0.8917; macro OVR AUC 0.9448; MCC 0.8691 | Lowest accuracy and macro OVR AUC among the multiclass models. The weaker average one-vs-rest ranking suggests a greater challenge separating several varieties; its rule-based structure may still be useful when inspectability is important. |
+| K-Nearest Neighbors | Accuracy 0.9166; macro OVR AUC 0.9833; MCC 0.8992 | Competitive accuracy and MCC after scaling the 16 features. The AUC trails the linear and SVM models, suggesting slightly weaker probability ranking across classes on this split. |
+| Gaussian Naive Bayes | Accuracy 0.7639; macro OVR AUC 0.9672; MCC 0.7154 | Lowest accuracy, weighted F1, and MCC, despite a substantially higher AUC. This indicates class-probability ranking is better than its final label decisions suggest, but its predictions are less reliable overall than the other models for this dataset. |
+| Support Vector Machine | Accuracy 0.9221; macro OVR AUC 0.9949; weighted F1 0.9222; MCC 0.9059 | Best multiclass accuracy, weighted F1, MCC, and macro OVR AUC on this split. It is the strongest aggregate performer among the five evaluated models, although its accuracy advantage over Logistic Regression is small. |
+
+#### Cross-Dataset Summary
+
+| ML Model | Binary accuracy / AUC | Multiclass accuracy / macro OVR AUC | Summary |
+|---|---:|---:|---|
+| Logistic Regression | 0.9649 / 0.9960 | 0.9214 / 0.9948 | High-ranking performance on both tasks; the top binary AUC and second-highest multiclass accuracy. |
+| Decision Tree | 0.9298 / 0.9246 | 0.8917 / 0.9448 | Lowest AUC in both comparisons, but offers a comparatively interpretable tree structure. |
+| K-Nearest Neighbors | 0.9561 / 0.9823 | 0.9166 / 0.9833 | Strong accuracy on both datasets after feature scaling; AUC trails the strongest models. |
+| Gaussian Naive Bayes | 0.9386 / 0.9934 | 0.7639 / 0.9672 | Much stronger accuracy on the binary dataset than the seven-class task; performance is dataset-dependent. |
+| Support Vector Machine | 0.9737 / 0.9947 | 0.9221 / 0.9949 | Highest accuracy on both tasks and highest multiclass aggregate metrics; strongest overall choice for these fixed splits. |
+
+**Overall observations:** Support Vector Machine is the accuracy leader on both held-out datasets and has the highest multiclass scores across the reported metrics. Logistic Regression attains the best binary AUC, showing that the winner depends on which metric matters. These results are from one stratified split per dataset; they should not be treated as a guarantee of performance on new data. No per-class precision/recall values are summarized here; use the app's classification report to inspect those for the selected test CSV.
 
 ## Run Locally
 
@@ -105,13 +131,11 @@ The app loads the saved models for the selected type and does not train on uploa
 
 ## Deploy on Streamlit Community Cloud
 
-**Live app:** Add the URL provided by Streamlit Community Cloud after deployment, for example `https://YOUR-APP-NAME.streamlit.app`.
-
 1. Push this repository to GitHub using the commands above.
 2. Open [Streamlit Community Cloud](https://share.streamlit.io/) and sign in with GitHub.
 3. Choose **Create app**, then select this repository and the `main` branch.
 4. Set the app file path to `app.py`, then deploy.
-5. Open the deployed app and copy its public URL into the **Live app** line above and into the assignment submission PDF.
+5. Open the live app from the **Project Links** table above and confirm the deployed app loads before submitting.
 
 ## Project Files
 
